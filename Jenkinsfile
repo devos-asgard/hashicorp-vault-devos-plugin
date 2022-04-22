@@ -2,6 +2,7 @@ def SERVICE_GROUP = "devops"
 def SERVICE_NAME = "vault-jenkins-plugin"
 def IMAGE_NAME = "${SERVICE_GROUP}-${SERVICE_NAME}"
 def REPOSITORY_URL = "https://github.com/devos-asgard/hashicorp-vault-plugin.git"
+def BRANCH_NAME = "master"
 
 
 @Library("bespin-pipeline-library")
