@@ -43,7 +43,7 @@ public class VaultRealmInfoCredentialsImpl extends AbstractVaultBaseStandardCred
   }
 
   @DataBoundSetter
-  public void setClientIdKey(String clientKey) {
+  public void setClientKey(String clientKey) {
     this.clientKey = defaultIfBlank(clientKey, DEFAULT_RI_CLIENT_KEY);
   }
 
@@ -63,7 +63,7 @@ public class VaultRealmInfoCredentialsImpl extends AbstractVaultBaseStandardCred
   }
 
   @DataBoundSetter
-  public void setSubscriptionIdKey(String authUrlKey) {
+  public void setAuthUrlKey(String authUrlKey) {
     this.authUrlKey = defaultIfBlank(authUrlKey, DEFAULT_RI_AUTH_URL_KEY);
   }
 
@@ -73,7 +73,7 @@ public class VaultRealmInfoCredentialsImpl extends AbstractVaultBaseStandardCred
   }
 
   @DataBoundSetter
-  public void setTenantIdKey(String realmKey) {
+  public void setRealmKey(String realmKey) {
     this.realmKey = defaultIfBlank(realmKey, DEFAULT_RI_REALM_KEY);
   }
 
