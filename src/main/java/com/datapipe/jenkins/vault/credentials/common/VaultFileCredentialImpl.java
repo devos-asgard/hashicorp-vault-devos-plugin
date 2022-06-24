@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -32,12 +33,21 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
     private String fileName;
     private Boolean useKey;
     private String vaultKey;
+    private Supplier<String> contents;
 
     @DataBoundConstructor
     public VaultFileCredentialImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
         this.fileName = UUID.randomUUID().toString();
+        this.contents = null;
+    }
+
+    public VaultFileCredentialImpl(CredentialsScope scope, String id,
+        String description, Supplier<String> contents) {
+        super(scope, id, description);
+        this.fileName = UUID.randomUUID().toString();
+        this.contents = contents;
     }
 
     @NonNull
@@ -69,7 +79,11 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
     @NonNull
     @Override
     public InputStream getContent() {
+        if( contents != null) {
+            return new ByteArrayInputStream(contents.get().getBytes(StandardCharsets.UTF_8));
+        }
         String content;
+
         if (useKey != null && useKey) {
             content = getVaultSecretKeyValue(vaultKey);
         } else {

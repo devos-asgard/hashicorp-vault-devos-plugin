@@ -37,14 +37,14 @@ public class VaultAzureServicePrincipalCredentialsImpl extends AbstractVaultBase
   private String subscriptionIdKey;
   private String tenantIdKey;
 
-  private Supplier<Secret> clientId;
+  private Supplier<String> clientId;
   private Supplier<Secret> clientSecret;
-  private Supplier<Secret> subscriptionId;
-  private Supplier<Secret> tenantId;
+  private Supplier<String> subscriptionId;
+  private Supplier<String> tenantId;
 
   @DataBoundConstructor
   public VaultAzureServicePrincipalCredentialsImpl(CredentialsScope scope, String id, String description
-  ,Supplier<Secret> clientId, Supplier<Secret> clientSecret, Supplier<Secret> subscriptionId, Supplier<Secret> tenantId) {
+  ,Supplier<String> clientId, Supplier<Secret> clientSecret, Supplier<String> subscriptionId, Supplier<String> tenantId) {
     super(scope, id, description);
     this.clientId = clientId;
     this.clientSecret = clientSecret;
@@ -99,7 +99,7 @@ public class VaultAzureServicePrincipalCredentialsImpl extends AbstractVaultBase
           LOGGER.log(Level.WARNING, "subscriptionId was null");
           return Secret.toString(Secret.fromString(getVaultSecretKeyValue(subscriptionIdKey)));
       }
-      return Secret.toString(subscriptionId.get());
+      return subscriptionId.get();
   }
 
   @NonNull
@@ -109,7 +109,7 @@ public class VaultAzureServicePrincipalCredentialsImpl extends AbstractVaultBase
           LOGGER.log(Level.WARNING, "tenantId was null");
           return Secret.toString(Secret.fromString(getVaultSecretKeyValue(tenantIdKey)));
       }
-      return Secret.toString(tenantId.get());
+      return tenantId.get();
   }
 
   @NonNull
@@ -129,7 +129,8 @@ public class VaultAzureServicePrincipalCredentialsImpl extends AbstractVaultBase
           LOGGER.log(Level.WARNING, "clientId was null");
           return Secret.toString(Secret.fromString(getVaultSecretKeyValue(clientIdKey)));
       }
-      return Secret.toString(clientId.get());
+      return clientId.get();
+
   }
 
   @Extension

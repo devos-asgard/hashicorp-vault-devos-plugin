@@ -43,11 +43,11 @@
   </developers>
   <distributionManagement>
     <snapshotRepository>
-      <id>nexus-snapshots</id>
+      <id>bespin.nexus-snapshots</id>
       <url>https://sonatype-nexus-devops.coruscant.opsnow.com/repository/maven-snapshots/</url>
     </snapshotRepository>
     <repository>
-      <id>nexus-releases</id>
+      <id>bespin.nexus-releases</id>
       <url>https://sonatype-nexus-devops.coruscant.opsnow.com/repository/maven-releases/</url>
     </repository>
   </distributionManagement>

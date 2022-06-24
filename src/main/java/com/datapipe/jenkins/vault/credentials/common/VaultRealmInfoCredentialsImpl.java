@@ -36,14 +36,14 @@ public class VaultRealmInfoCredentialsImpl extends AbstractVaultBaseStandardCred
   private String clientSecretKey;
   private String authUrlKey;
   private String realmKey;
-  private Supplier<Secret> client;
+  private Supplier<String> client;
   private Supplier<Secret> clientSceret;
-  private Supplier<Secret> authUrl;
-  private Supplier<Secret> realm;
+  private Supplier<String> authUrl;
+  private Supplier<String> realm;
 
   @DataBoundConstructor
   public VaultRealmInfoCredentialsImpl(CredentialsScope scope, String id, String description,
-      Supplier<Secret> client, Supplier<Secret> clientSceret, Supplier<Secret> authUrl, Supplier<Secret> realm) {
+      Supplier<String> client, Supplier<Secret> clientSceret, Supplier<String> authUrl, Supplier<String> realm) {
     super(scope, id, description);
     this.client = client;
     this.clientSceret = clientSceret;
@@ -98,7 +98,7 @@ public class VaultRealmInfoCredentialsImpl extends AbstractVaultBaseStandardCred
           LOGGER.log(Level.WARNING, "AuthUrl was null");
           return Secret.toString(Secret.fromString(getVaultSecretKeyValue(authUrlKey)));
       }
-      return Secret.toString(authUrl.get());
+      return authUrl.get();
   }
 
   @NonNull
@@ -108,7 +108,7 @@ public class VaultRealmInfoCredentialsImpl extends AbstractVaultBaseStandardCred
           LOGGER.log(Level.WARNING, "Realm was null");
           return Secret.toString(Secret.fromString(getVaultSecretKeyValue(realmKey)));
       }
-      return Secret.toString(realm.get());
+      return realm.get();
   }
 
   @NonNull
@@ -128,7 +128,7 @@ public class VaultRealmInfoCredentialsImpl extends AbstractVaultBaseStandardCred
           LOGGER.log(Level.WARNING, "Client was null");
           return Secret.toString(Secret.fromString(getVaultSecretKeyValue(clientKey)));
       }
-      return Secret.toString(client.get());
+      return client.get();
   }
 
   @Extension

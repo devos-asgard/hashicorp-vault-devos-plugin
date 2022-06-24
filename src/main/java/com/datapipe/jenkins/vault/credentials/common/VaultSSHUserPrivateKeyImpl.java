@@ -38,8 +38,8 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     private String usernameKey;
     private String privateKeyKey;
     private String passphraseKey;
-    private Supplier<Secret> username;
-    private Supplier<Secret> privateKey;
+    private Supplier<String> username;
+    private Supplier<String> privateKey;
     private Supplier<Secret> passphrase;
 
     @DataBoundConstructor
@@ -52,7 +52,7 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     }
 
     public VaultSSHUserPrivateKeyImpl(CredentialsScope scope, String id,
-        String description, Supplier<Secret> username, Supplier<Secret> privateKey, Supplier<Secret> passphrase) {
+        String description, Supplier<String> username, Supplier<String> privateKey, Supplier<Secret> passphrase) {
         super(scope, id, description);
         this.username = username;
         this.privateKey = privateKey;
@@ -97,7 +97,7 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
             LOGGER.log(Level.WARNING, "username was null");
             return Secret.toString(Secret.fromString(getVaultSecretKeyValue(usernameKey)));
         }
-        return Secret.toString(username.get());
+        return username.get();
     }
 
     @NonNull
@@ -108,7 +108,7 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
             LOGGER.log(Level.WARNING, "private key was null");
             return Secret.toString(Secret.fromString(getVaultSecretKeyValue(privateKeyKey)));
         }
-        return Secret.toString(privateKey.get());
+        return privateKey.get();
 
     }
 

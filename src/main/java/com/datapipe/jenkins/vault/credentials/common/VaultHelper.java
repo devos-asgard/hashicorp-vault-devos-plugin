@@ -33,7 +33,7 @@ public class VaultHelper {
                                               @CheckForNull String namespace,
                                               @CheckForNull Integer engineVersion) {
         VaultConfiguration configuration = null;
-        ItemGroup jenkins = Jenkins.get();
+        ItemGroup jenkins = Jenkins.getInstanceOrNull();
 
         for (VaultConfigResolver resolver : ExtensionList.lookup(VaultConfigResolver.class)) {
             if (configuration != null) {
