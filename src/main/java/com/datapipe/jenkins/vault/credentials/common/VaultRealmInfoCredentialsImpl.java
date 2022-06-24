@@ -8,6 +8,9 @@ import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -21,6 +24,8 @@ import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 public class VaultRealmInfoCredentialsImpl extends AbstractVaultBaseStandardCredentials
     implements VaultRealmInfoCredentials {
 
+    private static final Logger LOGGER = Logger
+        .getLogger(VaultRealmInfoCredentialsImpl.class.getName());
 
   public static final String DEFAULT_RI_CLIENT_KEY = "RI_CLIENT_KEY";
   public static final String DEFAULT_RI_CLIENT_SECRET_KEY = "RI_CLIENT_SECRET_KEY";
@@ -31,10 +36,19 @@ public class VaultRealmInfoCredentialsImpl extends AbstractVaultBaseStandardCred
   private String clientSecretKey;
   private String authUrlKey;
   private String realmKey;
+  private Supplier<Secret> client;
+  private Supplier<Secret> clientSceret;
+  private Supplier<Secret> authUrl;
+  private Supplier<Secret> realm;
 
   @DataBoundConstructor
-  public VaultRealmInfoCredentialsImpl(CredentialsScope scope, String id, String description) {
+  public VaultRealmInfoCredentialsImpl(CredentialsScope scope, String id, String description,
+      Supplier<Secret> client, Supplier<Secret> clientSceret, Supplier<Secret> authUrl, Supplier<Secret> realm) {
     super(scope, id, description);
+    this.client = client;
+    this.clientSceret = clientSceret;
+    this.authUrl = authUrl;
+    this.realm = realm;
   }
 
   @NonNull
@@ -80,30 +94,41 @@ public class VaultRealmInfoCredentialsImpl extends AbstractVaultBaseStandardCred
   @NonNull
   @Override
   public String getAuthUrl() {
-    String secretKey = defaultIfBlank(authUrlKey, DEFAULT_RI_AUTH_URL_KEY);
-    return getVaultSecretKeyValue(secretKey);
+      if (authUrl == null) {
+          LOGGER.log(Level.WARNING, "AuthUrl was null");
+          return Secret.toString(Secret.fromString(getVaultSecretKeyValue(authUrlKey)));
+      }
+      return Secret.toString(authUrl.get());
   }
 
   @NonNull
   @Override
   public String getRealm() {
-    String secretKey = defaultIfBlank(realmKey, DEFAULT_RI_REALM_KEY);
-    return getVaultSecretKeyValue(secretKey);
+      if (realm == null) {
+          LOGGER.log(Level.WARNING, "Realm was null");
+          return Secret.toString(Secret.fromString(getVaultSecretKeyValue(realmKey)));
+      }
+      return Secret.toString(realm.get());
   }
 
   @NonNull
   @Override
   public Secret getPassword() {
-    String secretKey = defaultIfBlank(clientSecretKey, DEFAULT_RI_CLIENT_SECRET_KEY);
-    String secret = getVaultSecretKeyValue(secretKey);
-    return Secret.fromString(secret);
+      if (clientSceret == null) {
+          LOGGER.log(Level.WARNING, "ClientSecret was null");
+          return Secret.fromString(getVaultSecretKeyValue(clientSecretKey));
+      }
+      return clientSceret.get();
   }
 
   @NonNull
   @Override
   public String getUsername() {
-    String secretKey = defaultIfBlank(clientKey, DEFAULT_RI_CLIENT_KEY);
-    return getVaultSecretKeyValue(secretKey);
+      if (client == null) {
+          LOGGER.log(Level.WARNING, "Client was null");
+          return Secret.toString(Secret.fromString(getVaultSecretKeyValue(clientKey)));
+      }
+      return Secret.toString(client.get());
   }
 
   @Extension
@@ -128,25 +153,25 @@ public class VaultRealmInfoCredentialsImpl extends AbstractVaultBaseStandardCred
 
       String client = null;
       try {
-        client = getVaultSecretKey(path, defaultIfBlank(clientKey, DEFAULT_RI_CLIENT_KEY), prefixPath, namespace, engineVersion, context);
+        client = getVaultSecretKey(path, defaultIfBlank(clientKey, DEFAULT_RI_CLIENT_KEY), prefixPath, namespace, engineVersion);
       } catch (Exception e) {
         return FormValidation.error("FAILED to retrieve client key: \n" + e);
       }
 
       try {
-        getVaultSecretKey(path, defaultIfBlank(clientSecretKey, DEFAULT_RI_CLIENT_SECRET_KEY), prefixPath, namespace, engineVersion, context);
+        getVaultSecretKey(path, defaultIfBlank(clientSecretKey, DEFAULT_RI_CLIENT_SECRET_KEY), prefixPath, namespace, engineVersion);
       } catch (Exception e) {
         return FormValidation.error("FAILED to retrieve client secret key: \n" + e);
       }
 
       try {
-        getVaultSecretKey(path, defaultIfBlank(authUrlKey, DEFAULT_RI_AUTH_URL_KEY), prefixPath, namespace, engineVersion, context);
+        getVaultSecretKey(path, defaultIfBlank(authUrlKey, DEFAULT_RI_AUTH_URL_KEY), prefixPath, namespace, engineVersion);
       } catch (Exception e) {
         return FormValidation.error("FAILED to retrieve authUrl key: \n" + e);
       }
 
       try {
-        getVaultSecretKey(path, defaultIfBlank(realmKey, DEFAULT_RI_REALM_KEY), prefixPath, namespace, engineVersion, context);
+        getVaultSecretKey(path, defaultIfBlank(realmKey, DEFAULT_RI_REALM_KEY), prefixPath, namespace, engineVersion);
       } catch (Exception e) {
         return FormValidation.error("FAILED to retrieve realm key: \n" + e);
       }

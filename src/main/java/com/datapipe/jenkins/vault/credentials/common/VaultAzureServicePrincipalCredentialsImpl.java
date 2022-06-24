@@ -8,6 +8,9 @@ import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -21,6 +24,8 @@ import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 public class VaultAzureServicePrincipalCredentialsImpl extends AbstractVaultBaseStandardCredentials
     implements VaultAzureServicePrincipalCredentials {
 
+    private static final Logger LOGGER = Logger
+        .getLogger(VaultAzureServicePrincipalCredentialsImpl.class.getName());
 
   public static final String DEFAULT_ARM_CLIENT_ID_KEY = "ARM_CLIENT_ID";
   public static final String DEFAULT_ARM_CLIENT_SECRET_KEY = "ARM_CLIENT_SECRET";
@@ -32,9 +37,19 @@ public class VaultAzureServicePrincipalCredentialsImpl extends AbstractVaultBase
   private String subscriptionIdKey;
   private String tenantIdKey;
 
+  private Supplier<Secret> clientId;
+  private Supplier<Secret> clientSecret;
+  private Supplier<Secret> subscriptionId;
+  private Supplier<Secret> tenantId;
+
   @DataBoundConstructor
-  public VaultAzureServicePrincipalCredentialsImpl(CredentialsScope scope, String id, String description) {
+  public VaultAzureServicePrincipalCredentialsImpl(CredentialsScope scope, String id, String description
+  ,Supplier<Secret> clientId, Supplier<Secret> clientSecret, Supplier<Secret> subscriptionId, Supplier<Secret> tenantId) {
     super(scope, id, description);
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
+    this.subscriptionId = subscriptionId;
+    this.tenantId = tenantId;
   }
 
   @NonNull
@@ -80,30 +95,41 @@ public class VaultAzureServicePrincipalCredentialsImpl extends AbstractVaultBase
   @NonNull
   @Override
   public String getSubscription() {
-    String secretKey = defaultIfBlank(subscriptionIdKey, DEFAULT_ARM_SUBSCRIPTION_ID_KEY);
-    return getVaultSecretKeyValue(secretKey);
+      if (subscriptionId == null) {
+          LOGGER.log(Level.WARNING, "subscriptionId was null");
+          return Secret.toString(Secret.fromString(getVaultSecretKeyValue(subscriptionIdKey)));
+      }
+      return Secret.toString(subscriptionId.get());
   }
 
   @NonNull
   @Override
   public String getTenant() {
-    String secretKey = defaultIfBlank(tenantIdKey, DEFAULT_ARM_TENANT_ID_KEY);
-    return getVaultSecretKeyValue(secretKey);
+      if (tenantId == null) {
+          LOGGER.log(Level.WARNING, "tenantId was null");
+          return Secret.toString(Secret.fromString(getVaultSecretKeyValue(tenantIdKey)));
+      }
+      return Secret.toString(tenantId.get());
   }
 
   @NonNull
   @Override
   public Secret getPassword() {
-    String secretKey = defaultIfBlank(clientSecretKey, DEFAULT_ARM_CLIENT_SECRET_KEY);
-    String secret = getVaultSecretKeyValue(secretKey);
-    return Secret.fromString(secret);
+      if (clientSecret == null) {
+          LOGGER.log(Level.WARNING, "clientSecret was null");
+          return Secret.fromString(getVaultSecretKeyValue(clientSecretKey));
+      }
+      return clientSecret.get();
   }
 
   @NonNull
   @Override
   public String getUsername() {
-    String secretKey = defaultIfBlank(clientIdKey, DEFAULT_ARM_CLIENT_ID_KEY);
-    return getVaultSecretKeyValue(secretKey);
+      if (clientId == null) {
+          LOGGER.log(Level.WARNING, "clientId was null");
+          return Secret.toString(Secret.fromString(getVaultSecretKeyValue(clientIdKey)));
+      }
+      return Secret.toString(clientId.get());
   }
 
   @Extension
@@ -128,25 +154,25 @@ public class VaultAzureServicePrincipalCredentialsImpl extends AbstractVaultBase
 
       String clientId = null;
       try {
-        clientId = getVaultSecretKey(path, defaultIfBlank(clientIdKey, DEFAULT_ARM_CLIENT_ID_KEY), prefixPath, namespace, engineVersion, context);
+        clientId = getVaultSecretKey(path, defaultIfBlank(clientIdKey, DEFAULT_ARM_CLIENT_ID_KEY), prefixPath, namespace, engineVersion);
       } catch (Exception e) {
         return FormValidation.error("FAILED to retrieve clientId key: \n" + e);
       }
 
       try {
-        getVaultSecretKey(path, defaultIfBlank(clientSecretKey, DEFAULT_ARM_CLIENT_SECRET_KEY), prefixPath, namespace, engineVersion, context);
+        getVaultSecretKey(path, defaultIfBlank(clientSecretKey, DEFAULT_ARM_CLIENT_SECRET_KEY), prefixPath, namespace, engineVersion);
       } catch (Exception e) {
         return FormValidation.error("FAILED to retrieve client secret key: \n" + e);
       }
 
       try {
-        getVaultSecretKey(path, defaultIfBlank(subscriptionIdKey, DEFAULT_ARM_SUBSCRIPTION_ID_KEY), prefixPath, namespace, engineVersion, context);
+        getVaultSecretKey(path, defaultIfBlank(subscriptionIdKey, DEFAULT_ARM_SUBSCRIPTION_ID_KEY), prefixPath, namespace, engineVersion);
       } catch (Exception e) {
         return FormValidation.error("FAILED to retrieve subscriptionId key: \n" + e);
       }
 
       try {
-        getVaultSecretKey(path, defaultIfBlank(tenantIdKey, DEFAULT_ARM_TENANT_ID_KEY), prefixPath, namespace, engineVersion, context);
+        getVaultSecretKey(path, defaultIfBlank(tenantIdKey, DEFAULT_ARM_TENANT_ID_KEY), prefixPath, namespace, engineVersion);
       } catch (Exception e) {
         return FormValidation.error("FAILED to retrieve tenantId key: \n" + e);
       }
