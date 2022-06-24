@@ -18,7 +18,6 @@ import hudson.security.ACL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 
 /**
@@ -60,13 +59,6 @@ public class VaultCredentialsProvider extends CredentialsProvider {
                                                     domainRequirements,
                                                     matcher
                                                 );
-
-                if (type != VaultCredential.class) {
-                    for (C c : folderCreds) {
-                        ((AbstractVaultBaseStandardCredentials)c).setContext(g);
-                    }
-                }
-
                 creds.addAll(folderCreds);
             }
 
@@ -76,11 +68,6 @@ public class VaultCredentialsProvider extends CredentialsProvider {
                                                 domainRequirements,
                                                 matcher
                                             );
-            if (type != VaultCredential.class) {
-                for (C c : globalCreds) {
-                    ((AbstractVaultBaseStandardCredentials)c).setContext(Jenkins.get());
-                }
-            }
             creds.addAll(globalCreds);
         }
 

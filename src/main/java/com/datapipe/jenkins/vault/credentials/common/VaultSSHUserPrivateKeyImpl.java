@@ -10,6 +10,8 @@ import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -36,11 +38,26 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     private String usernameKey;
     private String privateKeyKey;
     private String passphraseKey;
+    private Supplier<Secret> username;
+    private Supplier<Secret> privateKey;
+    private Supplier<Secret> passphrase;
 
     @DataBoundConstructor
     public VaultSSHUserPrivateKeyImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
+        username = null;
+        privateKey = null;
+        passphrase = null;
+    }
+
+    public VaultSSHUserPrivateKeyImpl(CredentialsScope scope, String id,
+        String description, Supplier<Secret> username, Supplier<Secret> privateKey, Supplier<Secret> passphrase) {
+        super(scope, id, description);
+        this.username = username;
+        this.privateKey = privateKey;
+        this.passphrase = passphrase;
+        LOGGER.log(Level.WARNING, "constructed ssh key cred");
     }
 
     @NonNull
@@ -76,15 +93,23 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     @NonNull
     @Override
     public String getUsername() {
-        String secretKey = defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY);
-        return getVaultSecretKeyValue(secretKey);
+        if (username == null) {
+            LOGGER.log(Level.WARNING, "username was null");
+            return Secret.toString(Secret.fromString(getVaultSecretKeyValue(usernameKey)));
+        }
+        return Secret.toString(username.get());
     }
 
     @NonNull
     @Override
     public String getPrivateKey() {
-        String secretKey = defaultIfBlank(privateKeyKey, DEFAULT_PRIVATE_KEY_KEY);
-        return getVaultSecretKeyValue(secretKey);
+        LOGGER.log(Level.WARNING, "usernameKey: " + usernameKey + " passphraseKey: " + passphraseKey + " privatekeykey: " + privateKeyKey);
+        if (privateKey == null) {
+            LOGGER.log(Level.WARNING, "private key was null");
+            return Secret.toString(Secret.fromString(getVaultSecretKeyValue(privateKeyKey)));
+        }
+        return Secret.toString(privateKey.get());
+
     }
 
     @NonNull
@@ -96,9 +121,11 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     @NonNull
     @Override
     public Secret getPassphrase() {
-        String secretKey = defaultIfBlank(passphraseKey, DEFAULT_PASSPHRASE_KEY);
-        String secret = getVaultSecretKeyValue(secretKey);
-        return Secret.fromString(secret);
+        if (passphrase == null) {
+            LOGGER.log(Level.WARNING, "passphrase was null");
+            return Secret.fromString(getVaultSecretKeyValue(passphraseKey));
+        }
+        return passphrase.get();
     }
 
     @Extension
@@ -121,19 +148,19 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
 
             String username;
             try {
-                username = getVaultSecretKey(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), prefixPath, namespace, engineVersion, context);
+                username = getVaultSecretKey(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve username key: \n" + e);
             }
 
             try {
-                getVaultSecretKey(path, defaultIfBlank(privateKeyKey, DEFAULT_PRIVATE_KEY_KEY), prefixPath, namespace, engineVersion, context);
+                getVaultSecretKey(path, defaultIfBlank(privateKeyKey, DEFAULT_PRIVATE_KEY_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve private key key: \n" + e);
             }
 
             try {
-                getVaultSecretKey(path, defaultIfBlank(passphraseKey, DEFAULT_PASSPHRASE_KEY), prefixPath, namespace, engineVersion, context);
+                getVaultSecretKey(path, defaultIfBlank(passphraseKey, DEFAULT_PASSPHRASE_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve passphrase key: \n" + e);
             }
